@@ -1,4 +1,11 @@
-from allennlp_eraser.dataset_readers.eraser import (
+from allennlp_eraser.dataset_readers.eraser import (  # isort:skip # NOQA
     EraserDatasetReader,
-)  # isort:skip # NOQA
-from allennlp_eraser.dataset_readers.boolq import BoolqDatasetReader  # NOQA
+)
+from allennlp_eraser.dataset_readers.boolq import (  # NOQA
+    BoolqDatasetReader,
+    BoolqEraserDatasetReader,
+)
+from allennlp_eraser.dataset_readers.movies import (
+    MoviesDatasetReader,
+    MoviesEraserDatasetReader,
+)
