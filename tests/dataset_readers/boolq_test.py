@@ -2,19 +2,21 @@ import pytest
 from allennlp.common.util import ensure_list
 
 from allennlp_eraser.common.testing import AllenNlpEraserTestCase
-from allennlp_eraser.dataset_readers import BoolqDatasetReader, BoolqEraserDatasetReader
+from allennlp_eraser.dataset_readers import BoolqDatasetReader, EraserDatasetReader
 
 
 class TestBoolqEraserDatasetReader:
     @pytest.mark.parametrize("lazy", (True, False))
     def test_read_from_file_lazy(self, lazy: bool):
-        reader = BoolqEraserDatasetReader(lazy=lazy)
-        instances = ensure_list(reader.read("train.jsonl"))
-
+        reader = EraserDatasetReader(lazy=lazy)
+        file_path = (
+            AllenNlpEraserTestCase.FIXTURES_ROOT / "data" / "boolq" / "train.jsonl"
+        )
+        instances = ensure_list(reader.read(file_path))
         assert len(instances) == 6363
 
     @pytest.mark.parametrize(
-        "file_path, num_data",
+        "filename, num_data",
         (
             ("train.jsonl", 6363),
             ("train_data.jsonl", 6363),
@@ -26,8 +28,9 @@ class TestBoolqEraserDatasetReader:
             ("test_data.jsonl", 2817),
         ),
     )
-    def test_read_from_file(self, file_path, num_data):
-        reader = BoolqEraserDatasetReader(lazy=True)
+    def test_read_from_file(self, filename: str, num_data: int):
+        reader = EraserDatasetReader(lazy=True)
+        file_path = AllenNlpEraserTestCase.FIXTURES_ROOT / "data" / "boolq" / filename
         instances = ensure_list(reader.read(file_path))
         assert len(instances) == num_data
 
@@ -409,7 +412,9 @@ class TestBoolqDatasetReader:
     @pytest.mark.parametrize("lazy", (True, False))
     def test_read_from_file_boolq(self, lazy: bool):
         reader = BoolqDatasetReader(lazy=lazy)
-        file_path = AllenNlpEraserTestCase.FIXTURES_ROOT / "data" / "boolq.jsonl"
+        file_path = (
+            AllenNlpEraserTestCase.FIXTURES_ROOT / "dataset_readers" / "boolq.jsonl"
+        )
         instances = reader.read(file_path)
         instances = ensure_list(instances)
 

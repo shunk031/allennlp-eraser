@@ -2,22 +2,22 @@ import pytest
 from allennlp.common.util import ensure_list
 
 from allennlp_eraser.common.testing import AllenNlpEraserTestCase
-from allennlp_eraser.dataset_readers import (
-    MoviesDatasetReader,
-    MoviesEraserDatasetReader,
-)
+from allennlp_eraser.dataset_readers import EraserDatasetReader, MoviesDatasetReader
 
 
 class TestMoviesEraserDatasetReader:
     @pytest.mark.parametrize("lazy", (True, False))
     def test_read_from_file_lazy(self, lazy: bool):
-        reader = MoviesEraserDatasetReader(lazy=lazy)
-        instances = ensure_list(reader.read("train.jsonl"))
+        reader = EraserDatasetReader(lazy=lazy)
+        file_path = (
+            AllenNlpEraserTestCase.FIXTURES_ROOT / "data" / "movies" / "train.jsonl"
+        )
+        instances = ensure_list(reader.read(file_path))
 
         assert len(instances) == 1600
 
     @pytest.mark.parametrize(
-        "file_path, num_data",
+        "filename, num_data",
         (
             ("train.jsonl", 1600),
             ("val.jsonl", 200),
@@ -25,8 +25,9 @@ class TestMoviesEraserDatasetReader:
             ("test.jsonl", 200),
         ),
     )
-    def test_read_from_file(self, file_path: str, num_data: int):
-        reader = MoviesEraserDatasetReader(lazy=True)
+    def test_read_from_file(self, filename: str, num_data: int):
+        reader = EraserDatasetReader(lazy=True)
+        file_path = AllenNlpEraserTestCase.FIXTURES_ROOT / "data" / "movies" / filename
         instances = ensure_list(reader.read(file_path))
         assert len(instances) == num_data
 

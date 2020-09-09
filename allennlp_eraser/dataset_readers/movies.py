@@ -1,26 +1,27 @@
 import json
 import pathlib
-from typing import Dict, FrozenSet, Iterable, List, Optional, Set, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Tuple
 from zipfile import ZipFile, ZipInfo
 
 from allennlp.common.file_utils import cached_path
 from allennlp.data.dataset_readers import DatasetReader
-from allennlp.data.fields import Field, LabelField, ListField, MetadataField, TextField
+from allennlp.data.fields import Field, LabelField, ListField, TextField
 from allennlp.data.instance import Instance
 from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer
 from allennlp.data.tokenizers import SpacyTokenizer, Token, Tokenizer
 from allennlp.data.tokenizers.sentence_splitter import SpacySentenceSplitter
 from overrides import overrides
 
-from allennlp_eraser.dataset_readers import EraserDatasetReader
-from allennlp_eraser.dataset_readers.utils import Annotation, Evidence, check_phase
+from allennlp_eraser.dataset_readers.utils import check_phase
+
+DATASET_URL = "http://www.cs.jhu.edu/~ozaidan/rationales/review_polarity_rationales.zip"
 
 
 @DatasetReader.register("movies")
 class MoviesDatasetReader(DatasetReader):
     def __init__(
         self,
-        dataset_url: str = "http://www.cs.jhu.edu/~ozaidan/rationales/review_polarity_rationales.zip",
+        dataset_url: str = DATASET_URL,
         tokenizer: Optional[Tokenizer] = None,
         token_indexers: Optional[TokenIndexer] = None,
         segment_sentences: bool = False,
@@ -127,34 +128,3 @@ class MoviesDatasetReader(DatasetReader):
             fields["label"] = LabelField(label)
 
         return Instance(fields)
-
-
-@DatasetReader.register("eraser-movies")
-class MoviesEraserDatasetReader(EraserDatasetReader):
-    def __init__(
-        self,
-        tokenizer: Optional[Tokenizer] = None,
-        token_indexers: Optional[Dict[str, TokenIndexer]] = None,
-        lazy: bool = False,
-        cache_directory: Optional[str] = None,
-        max_instances: Optional[int] = None,
-        manual_distributed_sharding: bool = False,
-        manual_multi_process_sharding: bool = False,
-    ):
-        super().__init__(
-            lazy=lazy,
-            cache_directory=cache_directory,
-            max_instances=max_instances,
-            manual_distributed_sharding=manual_distributed_sharding,
-            manual_multi_process_sharding=manual_multi_process_sharding,
-        )
-
-        self._tokenizer = tokenizer or SpacyTokenizer()
-        self._token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
-
-    @overrides
-    def _read(self, file_path: str) -> Iterable[Instance]:
-
-        for line in self._read_tarfile(file_path, dataset_name="movies"):
-            data = json.loads(line)
-            yield self.text_to_instance(**data)
