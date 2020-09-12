@@ -23,7 +23,7 @@ class MoviesDatasetReader(DatasetReader):
         self,
         dataset_url: str = DATASET_URL,
         tokenizer: Optional[Tokenizer] = None,
-        token_indexers: Optional[TokenIndexer] = None,
+        token_indexers: Optional[Dict[str, TokenIndexer]] = None,
         segment_sentences: bool = False,
         max_sequence_length: Optional[int] = None,
         skip_label_indexing: bool = False,
@@ -108,7 +108,7 @@ class MoviesDatasetReader(DatasetReader):
         return tokens
 
     @overrides
-    def text_to_instance(self, text: str, label: str = None) -> Instance:
+    def text_to_instance(self, text: str, label: Optional[str] = None) -> Instance:
 
         fields: Dict[str, Field] = {}
         if self._segment_sentences:

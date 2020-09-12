@@ -16,7 +16,7 @@ class BoolqDatasetReader(DatasetReader):
     def __init__(
         self,
         tokenizer: Optional[Tokenizer] = None,
-        token_indexers: Optional[TokenIndexer] = None,
+        token_indexers: Optional[Dict[str, TokenIndexer]] = None,
         segment_sentences: bool = False,
         max_sequence_length: Optional[int] = None,
         skip_label_indexing: bool = False,
