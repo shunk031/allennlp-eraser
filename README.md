@@ -8,3 +8,8 @@ Collection of AllenNLP Dataset Reader for [ERASER: A Benchmark to Evaluate Ratio
 
 > ERASER is a benchmark for understanding and evaluating rationales: http://www.eraserbenchmark.com/
 
+## Install
+
+```sh
+$ pip install git+ssh://git@github.com/shunk031/allennlp-eraser.git
+```
