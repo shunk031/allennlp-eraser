@@ -1,12 +1,8 @@
 import os
-import pathlib
-import tarfile
 from collections import defaultdict
-from tarfile import TarFile, TarInfo
 from typing import Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
-from allennlp.common.file_utils import cached_path
 from allennlp.data import Token
 from allennlp.data.dataset_readers import DatasetReader
 from allennlp.data.fields import (
@@ -14,17 +10,18 @@ from allennlp.data.fields import (
     LabelField,
     MetadataField,
     SequenceLabelField,
-    TextField
+    TextField,
 )
 from allennlp.data.instance import Instance
 from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer
+from allennlp.data.tokenizers import SpacyTokenizer, Tokenizer
 from overrides import overrides
 
 from allennlp_eraser.dataset_readers.utils import (
     Annotation,
     Evidence,
     annotations_from_jsonl,
-    load_flattened_documents
+    load_flattened_documents,
 )
 
 ERASER_DATASET_URL = (
@@ -37,11 +34,10 @@ class EraserDatasetReader(DatasetReader):
 
     def __init__(
         self,
-        # dataset_name: str,
+        tokenizer: Optional[Tokenizer] = None,
         token_indexers: Optional[Dict[str, TokenIndexer]] = None,
         max_sequence_length: Optional[int] = None,
         keep_prob: float = 1.0,
-        # eraser_dataset_path: str = ERASER_DATASET_URL,
         evidence_labels_namespace: str = "evidence_labels",
         kept_token_labels_namespace: str = "kept_token_labels",
         lazy: bool = False,
@@ -58,56 +54,24 @@ class EraserDatasetReader(DatasetReader):
             manual_distributed_sharding=manual_distributed_sharding,
             manual_multi_process_sharding=manual_multi_process_sharding,
         )
-        # self._dataset_name = dataset_name
-        # self._eraser_dataset_path = eraser_dataset_path
+
+        self._tokenizer = tokenizer or SpacyTokenizer()
+        self._token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
+        self._is_bert = "bert" in self._token_indexers
+
         self._max_sequence_length = max_sequence_length
         self._keep_prob = keep_prob
 
         self._evidence_labels_namespace = evidence_labels_namespace
         self._kept_token_labels_namespace = kept_token_labels_namespace
 
-        self._token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
-        self._is_bert = "bert" in self._token_indexers
-
-    # def _find_file_from_tar(
-    #     self,
-    #     tar: TarFile,
-    #     filename: str,
-    # ) -> TarInfo:
-    #     for tarinfo in tar:
-    #         tarname = pathlib.Path(tarinfo.name)
-    #         if tarname.match(f"data/{self._dataset_name}/{filename}"):
-    #             return tarinfo
-
-    #     raise FileNotFoundError(filename)
-
-    # def _read_tarfile(self, filename: str) -> TarInfo:
-    #     file_path = cached_path(self._eraser_dataset_path)
-
-    #     with tarfile.open(file_path, "r") as tar_file:
-    #         tar_info = self._find_file_from_tar(tar_file, filename)
-
-    #         for line in tar_file.extractfile(tar_info):
-    #             yield line
-
-    # def _read_annotations_from_tarfile(self, filename: str) -> List[Annotation]:
-    #     file_path = cached_path(self._eraser_dataset_path)
-    #     with tarfile.open(file_path, "r") as tar_file:
-    #         tar_info = self._find_file_from_tar(tar_file, filename)
-    #         annotations = annotations_from_jsonl(tar_info)
-
-    #     return annotations
-
     def generate_doc_evidence_map(
         self, evidences: List[List[Evidence]]
     ) -> Dict[str, List[Tuple[int, int]]]:
 
-        # doc_evidence_map: Dict[str, List[Tuple[int, int]]] = {}
         doc_evidence_map: Dict[str, List[Tuple[int, int]]] = defaultdict(list)
         for ev_group in evidences:
             for ev_clause in ev_group:
-                # if ev_clause.docid not in doc_evidence_map:
-                #     doc_evidence_map[ev_clause.docid] = []
                 doc_evidence_map[ev_clause.docid].append(
                     (ev_clause.start_token, ev_clause.end_token)
                 )
@@ -164,7 +128,8 @@ class EraserDatasetReader(DatasetReader):
         always_keep_mask: List[int] = []
 
         for docid, doc_words in docs.items():
-            doc_tokens = [Token(w) for w in doc_words]
+            # doc_tokens = [Token(w) for w in doc_words]
+            doc_tokens = self._tokenizer.tokenize(doc_words)
             tokens.extend(doc_tokens)
             doc_to_span_map[docid] = (len(tokens) - len(doc_words), len(tokens))
 

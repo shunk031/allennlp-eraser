@@ -107,11 +107,11 @@ def load_documents(
         with open(os.path.join(docs_dir, d), "r") as rf:
             lines = [line.strip() for line in rf.readlines()]
             lines = list(filter(lambda x: bool(len(x)), lines))
-            tokenized = [
-                list(filter(lambda x: bool(len(x)), line.strip().split(" ")))
-                for line in lines
-            ]
-            res[d] = tokenized
+            # tokenized = [
+            #     list(filter(lambda x: bool(len(x)), line.strip().split(" ")))
+            #     for line in lines
+            # ]
+            res[d] = lines
     return res
 
 
@@ -143,6 +143,6 @@ def load_documents_from_file(
         docids = sorted(set(str(d) for d in docids))
     for d in docids:
         lines = documents[d].split("\n")
-        tokenized = [line.strip().split(" ") for line in lines]
-        res[d] = tokenized
+        # tokenized = [line.strip().split(" ") for line in lines]
+        res[d] = lines
     return res
