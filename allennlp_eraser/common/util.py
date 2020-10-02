@@ -157,7 +157,7 @@ def sort_docids_from_evidences(evidences: List[List[Evidence]]) -> List[str]:
 
 
 def generate_doc_evidence_map(
-    self, evidences: List[List[Evidence]]
+    evidences: List[List[Evidence]],
 ) -> Dict[str, List[Tuple[int, int]]]:
 
     doc_evidence_map: Dict[str, List[Tuple[int, int]]] = defaultdict(list)
