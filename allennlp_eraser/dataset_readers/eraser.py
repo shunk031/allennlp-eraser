@@ -1,8 +1,8 @@
 import os
-from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
+import pydantic
 from allennlp.data import Token
 from allennlp.data.dataset_readers import DatasetReader
 from allennlp.data.fields import (
@@ -30,8 +30,7 @@ ERASER_DATASET_URL = (
 )
 
 
-@dataclass(eq=True, frozen=True)
-class EraserData(object):
+class EraserData(pydantic.BaseModel):
     annotation_id: str
     docs: Dict[str, List[str]]
     rationales: Dict[str, List[Tuple[int, int]]]
@@ -105,7 +104,7 @@ class EraserDatasetReader(DatasetReader):
     @overrides
     def _read(self, file_path: str) -> Iterable[Instance]:
         for eraser_data in read_eraser_data(file_path):
-            yield self.text_to_instance(**eraser_data.as_dict())
+            yield self.text_to_instance(**eraser_data.dict())
 
     @overrides
     def text_to_instance(
