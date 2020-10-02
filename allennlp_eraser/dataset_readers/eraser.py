@@ -1,5 +1,4 @@
 import os
-from collections import defaultdict
 from typing import Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
@@ -10,19 +9,20 @@ from allennlp.data.fields import (
     LabelField,
     MetadataField,
     SequenceLabelField,
-    TextField,
+    TextField
 )
 from allennlp.data.instance import Instance
 from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer
 from allennlp.data.tokenizers import SpacyTokenizer, Tokenizer
-from overrides import overrides
-
-from allennlp_eraser.dataset_readers.utils import (
+from allennlp_eraser.common.util import (
     Annotation,
     Evidence,
     annotations_from_jsonl,
+    generate_doc_evidence_map,
     load_flattened_documents,
+    sort_docids_from_evidences
 )
+from overrides import overrides
 
 ERASER_DATASET_URL = (
     "https://storage.googleapis.com/sfr-nazneen-website-files-research/data_v1.2.tar.gz"
@@ -65,24 +65,6 @@ class EraserDatasetReader(DatasetReader):
         self._evidence_labels_namespace = evidence_labels_namespace
         self._kept_token_labels_namespace = kept_token_labels_namespace
 
-    def generate_doc_evidence_map(
-        self, evidences: List[List[Evidence]]
-    ) -> Dict[str, List[Tuple[int, int]]]:
-
-        doc_evidence_map: Dict[str, List[Tuple[int, int]]] = defaultdict(list)
-        for ev_group in evidences:
-            for ev_clause in ev_group:
-                doc_evidence_map[ev_clause.docid].append(
-                    (ev_clause.start_token, ev_clause.end_token)
-                )
-        return doc_evidence_map
-
-    def _sort_docids_from_evidences(self, evidences: List[List[Evidence]]) -> List[str]:
-        unique_ids = set(
-            [ev_clause.docid for ev_group in evidences for ev_clause in ev_group]
-        )
-        return sorted(list(unique_ids))
-
     @overrides
     def _read(self, file_path: str) -> Iterable[Instance]:
         data_dir = os.path.dirname(file_path)
@@ -94,10 +76,10 @@ class EraserDatasetReader(DatasetReader):
             evidences: List[List[Evidence]] = ann.evidences
             label: str = ann.classification
             query: str = ann.query
-            docids: List[str] = self._sort_docids_from_evidences(evidences)
+            docids: List[str] = sort_docids_from_evidences(evidences)
 
             filtered_docs: Dict[str, List[str]] = {d: docs[d] for d in docids}
-            doc_evidence_map = self.generate_doc_evidence_map(evidences)
+            doc_evidence_map = generate_doc_evidence_map(evidences)
 
             if label is not None:
                 label = str(label)

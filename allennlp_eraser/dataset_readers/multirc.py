@@ -12,7 +12,7 @@ from allennlp.data.tokenizers import SpacyTokenizer, Tokenizer
 from allennlp.data.tokenizers.sentence_splitter import SpacySentenceSplitter
 from overrides import overrides
 
-from allennlp_eraser.dataset_readers.utils import check_phase
+from allennlp_eraser.common.util import check_phase
 
 DATASET_URL = "https://cogcomp.seas.upenn.edu/multirc/data/mutlirc-v2.zip"
 

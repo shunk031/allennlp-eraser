@@ -1,5 +1,6 @@
 import json
 import os
+from collections import defaultdict
 from dataclasses import dataclass
 from itertools import chain
 from typing import Dict, FrozenSet, List, Set, Tuple, Union
@@ -146,3 +147,23 @@ def load_documents_from_file(
         # tokenized = [line.strip().split(" ") for line in lines]
         res[d] = lines
     return res
+
+
+def sort_docids_from_evidences(evidences: List[List[Evidence]]) -> List[str]:
+    unique_ids = set(
+        [ev_clause.docid for ev_group in evidences for ev_clause in ev_group]
+    )
+    return sorted(list(unique_ids))
+
+
+def generate_doc_evidence_map(
+    self, evidences: List[List[Evidence]]
+) -> Dict[str, List[Tuple[int, int]]]:
+
+    doc_evidence_map: Dict[str, List[Tuple[int, int]]] = defaultdict(list)
+    for ev_group in evidences:
+        for ev_clause in ev_group:
+            doc_evidence_map[ev_clause.docid].append(
+                (ev_clause.start_token, ev_clause.end_token)
+            )
+    return doc_evidence_map
