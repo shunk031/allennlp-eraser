@@ -1,4 +1,5 @@
 import os
+from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
@@ -9,7 +10,7 @@ from allennlp.data.fields import (
     LabelField,
     MetadataField,
     SequenceLabelField,
-    TextField
+    TextField,
 )
 from allennlp.data.instance import Instance
 from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer
@@ -20,13 +21,49 @@ from allennlp_eraser.common.util import (
     annotations_from_jsonl,
     generate_doc_evidence_map,
     load_flattened_documents,
-    sort_docids_from_evidences
+    sort_docids_from_evidences,
 )
 from overrides import overrides
 
 ERASER_DATASET_URL = (
     "https://storage.googleapis.com/sfr-nazneen-website-files-research/data_v1.2.tar.gz"
 )
+
+
+@dataclass(eq=True, frozen=True)
+class EraserData(object):
+    annotation_id: str
+    docs: Dict[str, List[str]]
+    rationales: Dict[str, List[Tuple[int, int]]]
+    query: str
+    label: str
+
+
+def read_eraser_data(file_path: str) -> Iterable[EraserData]:
+    data_dir = os.path.dirname(file_path)
+    annotations: List[Annotation] = annotations_from_jsonl(file_path)
+    docs: Dict[str, List[str]] = load_flattened_documents(data_dir, docids=None)
+
+    for ann in annotations:
+        annotation_id: str = ann.annotation_id
+        evidences: List[List[Evidence]] = ann.evidences
+        label: str = ann.classification
+        query: str = ann.query
+        docids: List[str] = sort_docids_from_evidences(evidences)
+
+        filtered_docs: Dict[str, List[str]] = {d: docs[d] for d in docids}
+        doc_evidence_map = generate_doc_evidence_map(evidences)
+
+        if label is not None:
+            label = str(label)
+
+        yield EraserData(
+            annotation_id=annotation_id,
+            docs=filtered_docs,
+            rationales=doc_evidence_map,
+            query=query,
+            label=label,
+        )
 
 
 class EraserDatasetReader(DatasetReader):
@@ -67,30 +104,8 @@ class EraserDatasetReader(DatasetReader):
 
     @overrides
     def _read(self, file_path: str) -> Iterable[Instance]:
-        data_dir = os.path.dirname(file_path)
-        annotations: List[Annotation] = annotations_from_jsonl(file_path)
-        docs: Dict[str, List[str]] = load_flattened_documents(data_dir, docids=None)
-
-        for ann in annotations:
-            annotation_id: str = ann.annotation_id
-            evidences: List[List[Evidence]] = ann.evidences
-            label: str = ann.classification
-            query: str = ann.query
-            docids: List[str] = sort_docids_from_evidences(evidences)
-
-            filtered_docs: Dict[str, List[str]] = {d: docs[d] for d in docids}
-            doc_evidence_map = generate_doc_evidence_map(evidences)
-
-            if label is not None:
-                label = str(label)
-
-            yield self.text_to_instance(
-                annotation_id=annotation_id,
-                docs=filtered_docs,
-                rationales=doc_evidence_map,
-                query=query,
-                label=label,
-            )
+        for eraser_data in read_eraser_data(file_path):
+            yield self.text_to_instance(**eraser_data.as_dict())
 
     @overrides
     def text_to_instance(
