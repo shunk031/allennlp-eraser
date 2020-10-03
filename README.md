@@ -13,3 +13,7 @@ Collection of AllenNLP Dataset Reader for [ERASER: A Benchmark to Evaluate Ratio
 ```sh
 $ pip install git+ssh://git@github.com/shunk031/allennlp-eraser.git
 ```
+
+## Acknowledgments
+
+Our code is inspired by [jayded/eraserbenchmark](https://github.com/jayded/eraserbenchmark).
