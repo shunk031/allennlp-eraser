@@ -1,4 +1,4 @@
-# ERASER for AllenNLP 
+# [WIP] ERASER for AllenNLP 
 
 <a href="https://www.aclweb.org/anthology/2020.acl-main.408/"><img alt="ACL2020 2020.acl-main.408" src="https://img.shields.io/badge/ACL2020-2020.acl--main.408-red"></a>
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
