@@ -16,4 +16,4 @@ $ pip install git+ssh://git@github.com/shunk031/allennlp-eraser.git
 
 ## Acknowledgments
 
-Our code is inspired by [jayded/eraserbenchmark](https://github.com/jayded/eraserbenchmark).
+The code in this repository is based on [jayded/eraserbenchmark](https://github.com/jayded/eraserbenchmark).
