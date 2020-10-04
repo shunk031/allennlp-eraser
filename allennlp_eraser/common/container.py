@@ -9,11 +9,11 @@ class SpanResult(object):
 
 
 @dataclass
-class RationalResult(object):
+class RationaleResult(object):
     docid: str
-    hard_rational_predictions: List[SpanResult] = field(default_factory=list)
-    soft_rationale_predictions: Any
-    soft_sentence_predictions: Any
+    hard_rationale_predictions: List[SpanResult] = field(default_factory=list)
+    soft_rationale_predictions: List[SpanResult] = field(default_factory=list)
+    soft_sentence_predictions: List[SpanResult] = field(default_factory=list)
 
 
 @dataclass
@@ -26,8 +26,8 @@ class ThresholdedScore(object):
 @dataclass
 class InstanceResult(object):
     annotation_id: str
-    rationales: List[RationalResult]
-    classification: str = ""
+    rationales: List[RationaleResult]
+    classification: str
     classification_scores: dict
     comprehensiveness_classification_scores: dict
     sufficiency_classification_scores: dict
