@@ -1,6 +1,6 @@
 # [WIP] ERASER for AllenNLP 
 
-![CI](https://github.com/shunk031/allennlp-eraser/workflows/CI/badge.svg)
+[![CI](https://github.com/shunk031/allennlp-eraser/workflows/CI/badge.svg)](https://github.com/shunk031/allennlp-eraser/actions?query=workflow%3ACI)
 
 <a href="https://www.aclweb.org/anthology/2020.acl-main.408/"><img alt="ACL2020 2020.acl-main.408" src="https://img.shields.io/badge/ACL2020-2020.acl--main.408-red"></a>
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
