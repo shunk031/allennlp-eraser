@@ -1,7 +1,28 @@
 from collections import defaultdict
-from typing import Any, Dict, List, Tuple
+from dataclasses import dataclass
+from typing import Dict, List, Tuple
 
 from allennlp_eraser.training.metrics.rationale import Rationale
+
+
+@dataclass
+class InstanceScore(object):
+    p: float
+    r: float
+    f1: float
+
+
+@dataclass
+class InstanceScores(object):
+    instance_micro: InstanceScore
+    instance_macro: InstanceScore
+
+
+@dataclass
+class PartialMatchScore(object):
+    threshold: float
+    micro: InstanceScore
+    macro: InstanceScore
 
 
 def _f1(_p: int, _r: int) -> float:
@@ -21,7 +42,7 @@ def _keyed_rationale_from_list(
 
 def partial_match_score(
     truth: List[Rationale], pred: List[Rationale], thresholds: List[float]
-) -> List[Dict[str, Any]]:
+) -> List[PartialMatchScore]:
     """Computes a partial match F1
     Computes an instance-level (annotation) micro- and macro-averaged F1 score.
     True Positives are computed by using intersection-over-union and
@@ -38,7 +59,7 @@ def partial_match_score(
 
     num_classifications = {k: len(v) for k, v in pred_to_rat.items()}
     num_truth = {k: len(v) for k, v in ann_to_rat.items()}
-    ious = defaultdict(dict)
+    ious: Dict[str, Dict[str, float]] = defaultdict(dict)
     for k in set(ann_to_rat.keys()) | set(pred_to_rat.keys()):
         for p in pred_to_rat.get(k, []):
             best_iou = 0.0
@@ -55,9 +76,10 @@ def partial_match_score(
                 if iou > best_iou:
                     best_iou = iou
             ious[k][p] = best_iou
-    scores = []
+
+    scores: List[PartialMatchScore] = []
     for threshold in thresholds:
-        threshold_tps = dict()
+        threshold_tps: Dict[str, float] = {}
         for k, vs in ious.items():
             threshold_tps[k] = sum(int(x >= threshold) for x in vs.values())
         micro_r = (
@@ -81,36 +103,33 @@ def partial_match_score(
         macro_r = sum(macro_rs) / len(macro_rs) if len(macro_rs) > 0 else 0
         macro_p = sum(macro_ps) / len(macro_ps) if len(macro_ps) > 0 else 0
         macro_f1 = _f1(macro_r, macro_p)
+
         scores.append(
-            {
-                "threshold": threshold,
-                "micro": {"p": micro_p, "r": micro_r, "f1": micro_f1},
-                "macro": {"p": macro_p, "r": macro_r, "f1": macro_f1},
-            }
+            PartialMatchScore(
+                threshold=threshold,
+                micro=InstanceScore(p=micro_p, r=micro_r, f1=micro_f1),
+                macro=InstanceScore(p=macro_p, r=macro_r, f1=macro_f1),
+            )
         )
+
     return scores
 
 
 def score_hard_rationale_predictions(
     truth: List[Rationale], pred: List[Rationale]
-) -> Dict[str, Dict[str, float]]:
+) -> InstanceScores:
     """Computes instance (annotation)-level micro/macro averaged F1s"""
-    scores = dict()
+
     truth = set(truth)
     pred = set(pred)
     micro_prec = len(truth & pred) / len(pred)
     micro_rec = len(truth & pred) / len(truth)
     micro_f1 = _f1(micro_prec, micro_rec)
-
-    scores["instance_micro"] = {
-        "p": micro_prec,
-        "r": micro_rec,
-        "f1": micro_f1,
-    }
+    instance_micro = InstanceScore(p=micro_prec, r=micro_rec, f1=micro_f1)
 
     ann_to_rat = _keyed_rationale_from_list(truth)
     pred_to_rat = _keyed_rationale_from_list(pred)
-    instances_to_scores = dict()
+    instances_to_scores: Dict[str, InstanceScore] = {}
     for k in set(ann_to_rat.keys()) | (pred_to_rat.keys()):
         if len(pred_to_rat.get(k, set())) > 0:
             instance_prec = len(
@@ -124,25 +143,22 @@ def score_hard_rationale_predictions(
             ) / len(ann_to_rat[k])
         else:
             instance_rec = 0
+
         instance_f1 = _f1(instance_prec, instance_rec)
-        instances_to_scores[k] = {
-            "p": instance_prec,
-            "r": instance_rec,
-            "f1": instance_f1,
-        }
+        instances_to_scores[k] = InstanceScore(
+            p=instance_prec, r=instance_rec, f1=instance_f1
+        )
+
     # these are calculated as sklearn would
-    macro_prec = sum(instance["p"] for instance in instances_to_scores.values()) / len(
+    macro_prec = sum(instance.p for instance in instances_to_scores.values()) / len(
         instances_to_scores
     )
-    macro_rec = sum(instance["r"] for instance in instances_to_scores.values()) / len(
+    macro_rec = sum(instance.r for instance in instances_to_scores.values()) / len(
         instances_to_scores
     )
-    macro_f1 = sum(instance["f1"] for instance in instances_to_scores.values()) / len(
+    macro_f1 = sum(instance.f1 for instance in instances_to_scores.values()) / len(
         instances_to_scores
     )
-    scores["instance_macro"] = {
-        "p": macro_prec,
-        "r": macro_rec,
-        "f1": macro_f1,
-    }
-    return scores
+    instance_macro = InstanceScore(p=macro_prec, r=macro_rec, f1=macro_f1)
+
+    return InstanceScores(instance_micro=instance_micro, instance_macro=instance_macro)
